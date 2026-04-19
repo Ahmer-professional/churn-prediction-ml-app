@@ -50,7 +50,7 @@ def predict_form():
                               payment_method]])
 
         scaled = scaler.transform(features)
-        prediction = model.predict(saled := scaled)[0]
+        prediction = model.predict(scaled)[0]
 
         result = "Customer Will Churn ❌" if prediction == 1 else "Customer Will Stay ✅"
         return render_template("index.html", prediction_text=result)
