@@ -10,7 +10,8 @@ app = Flask(__name__)
 # -------------------------------
 model = None
 try:
-    model = pickle.load(open("model.pkl", "rb"))
+model = pickle.load(open("model/churn_model.pkl", "rb"))
+scaler = pickle.load(open("model/scaler.pkl", "rb"))
     print("Model loaded successfully")
 except Exception as e:
     print("Model loading failed:", e)
