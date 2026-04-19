@@ -1,13 +1,19 @@
 from flask import Flask, request, render_template
 import numpy as np
 import pickle
-
-# Load model and scaler
-model = pickle.load(open('model/churn_model.pkl', 'rb'))
-scaler = pickle.load(open('model/scaler.pkl', 'rb'))
-
-# Create Flask app
+import os
+# Create Flask
 app = Flask(__name__)
+
+# Get current directory path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Load model and scaler using absolute path
+model_path = os.path.join(BASE_DIR, "model/churn_model.pkl")
+scaler_path = os.path.join(BASE_DIR, "model/scaler.pkl")
+
+model = pickle.load(open(model_path, "rb"))
+scaler = pickle.load(open(scaler_path, "rb"))
 
 @app.route('/')
 def home():
@@ -43,4 +49,9 @@ def predict_form():
         return render_template('index.html', prediction_text=f"Error: {str(e)}")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+@app.route("/health")
+def health():
+    return "OK"
