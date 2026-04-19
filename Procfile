@@ -1,1 +1,1 @@
-web: gunicorn ChurnProject.app:app
+web: gunicorn app:app
