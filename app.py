@@ -1,21 +1,38 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import pickle
 import os
+import numpy as np
 
 app = Flask(__name__)
 
-# Load model and scaler
-model = pickle.load(open("model/churn_model.pkl", "rb"))
-scaler = pickle.load(open("model/scaler.pkl", "rb"))
+# -----------------------------
+# Load model safely (Render fix)
+# -----------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+model_path = os.path.join(BASE_DIR, "model", "churn_model.pkl")
+scaler_path = os.path.join(BASE_DIR, "model", "scaler.pkl")
+
+model = pickle.load(open(model_path, "rb"))
+scaler = pickle.load(open(scaler_path, "rb"))
+
+# -----------------------------
+# Home page
+# -----------------------------
 @app.route("/")
 def home():
     return render_template("index.html")
 
+# -----------------------------
+# Health check (Render uses this)
+# -----------------------------
 @app.route("/health")
 def health():
     return "OK"
 
+# -----------------------------
+# Prediction from HTML form
+# -----------------------------
 @app.route("/predict_form", methods=["POST"])
 def predict_form():
     try:
@@ -28,18 +45,48 @@ def predict_form():
         support_calls = int(request.form["support_calls"])
         payment_method = int(request.form["payment_method"])
 
-        features = [[age, gender, tenure, monthly_charges, contract,
-                     internet_service, support_calls, payment_method]]
+        features = np.array([[age, gender, tenure, monthly_charges,
+                              contract, internet_service, support_calls,
+                              payment_method]])
 
         scaled = scaler.transform(features)
-        prediction = model.predict(scaled)[0]
+        prediction = model.predict(saled := scaled)[0]
 
         result = "Customer Will Churn ❌" if prediction == 1 else "Customer Will Stay ✅"
         return render_template("index.html", prediction_text=result)
 
     except Exception as e:
-        return str(e)
+        return f"Error: {str(e)}"
 
+# -----------------------------
+# JSON API (for testing/postman)
+# -----------------------------
+@app.route("/predict_api", methods=["POST"])
+def predict_api():
+    try:
+        data = request.get_json()
+
+        features = np.array([[ 
+            data["age"],
+            data["gender"],
+            data["tenure"],
+            data["monthly_charges"],
+            data["contract"],
+            data["internet_service"],
+            data["support_calls"],
+            data["payment_method"]
+        ]])
+
+        scaled = scaler.transform(features)
+        prediction = int(model.predict(scaled)[0])
+
+        return jsonify({"prediction": prediction})
+
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+# -----------------------------
+# Local run only (not used by Render)
+# -----------------------------
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
