@@ -1,4 +1,4 @@
-﻿asttokens==3.0.1
+asttokens==3.0.1
 blinker==1.9.0
 camelcase==0.2
 certifi==2026.2.25
